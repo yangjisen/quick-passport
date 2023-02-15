@@ -1,0 +1,32 @@
+{
+    "name": "yangjisen/quick-passport",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/yangjisen/quick-passport/issues",
+        "source": "https://github.com/yangjisen/quick-passport"
+    },
+    "autoload": {
+        "psr-4": {
+            "YangJiSen\\QuickPassport\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Yang Ji Sen",
+            "email": "381722452@qq.com"
+        }
+    ],
+    "require": {
+        "laravel/passport": "^11.7"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "YangJiSen\\QuickPassport\\PassportServiceProvider"
+            ],
+            "dont-discover": [
+                "laravel/passport"
+            ]
+        }
+    }
+}
