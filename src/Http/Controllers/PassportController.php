@@ -16,6 +16,15 @@ class PassportController
     public function __construct(protected AuthorizationServer $server){}
 
     /**
+     * 设置配置文件的名称
+     * @return string
+     */
+    public function clientName()
+    {
+        return 'password_grant_client';
+    }
+
+    /**
      * @param $username
      * @param $password
      * @param array $scopes
@@ -25,8 +34,8 @@ class PassportController
     {
         return (new Psr7ServerRequest('POST', 'not-important'))->withParsedBody([
             'grant_type' => 'password',
-            'client_id' => config('passport.password_grant_client.id', 2),
-            'client_secret' => config('passport.password_grant_client.secret', 'secret'),
+            'client_id' => config("passport.{$this->clientName()}.id", 2),
+            'client_secret' => config("passport.{$this->clientName()}.secret", 'secret'),
             'scope' => implode(' ', $scopes),
             'username' => "{$username}",
             'password' => "{$password}",

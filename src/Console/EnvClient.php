@@ -23,6 +23,9 @@ class EnvClient extends Command
      */
     protected $description = 'Set the client ID and secret to the environment file';
 
+    protected bool $alreadyPersonal = false;
+    protected bool $alreadyPassword = false;
+
     /**
      * Execute the console command.
      */
@@ -32,19 +35,27 @@ class EnvClient extends Command
 
         /* Todo 如果存在多个怎么处理 */
         $clients->getClient()->each(function ($client) {
-            $envIdKey = 'PASSPORT_PERSONAL_ACCESS_CLIENT_ID';
-            $configIdKey = 'passport.personal_access_client.id';
+            /* 前缀匹配 */
+            $envPrefix = $client->password_client == 1 ? 'PASSWORD_GRAN' : 'PERSONAL_ACCESS';
+            $configPrefix = $client->password_client == 1 ? 'password_grant' : 'personal_access';
 
-            $envSecretKey = 'PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET';
-            $configSecretKey = 'passport.personal_access_client.secret';
+            $byId = '';
+            if($client->personal_access_client == 1) {
+                if($this->alreadyPersonal) $byId = $client->getKey();
+                $this->alreadyPersonal = true;
+            }
 
             if($client->password_client == 1) {
-                $envIdKey = 'PASSPORT_PASSWORD_GRAN_CLIENT_ID';
-                $configIdKey = 'passport.password_grant_client.id';
-
-                $envSecretKey = 'PASSPORT_PASSWORD_GRAN_CLIENT_SECRET';
-                $configSecretKey = 'passport.password_grant_client.secret';
+                if($this->alreadyPassword) $byId = $client->getKey();
+                $this->alreadyPassword = true;
             }
+
+            /* 匹配的键值 */
+            $envIdKey = "PASSPORT_{$envPrefix}_CLIENT{$byId}_ID";
+            $configIdKey = "passport.{$configPrefix}_client{$byId}.id";
+
+            $envSecretKey = "PASSPORT_{$envPrefix}_CLIENT{$byId}_SECRET";
+            $configSecretKey = "passport.{$configPrefix}_client{$byId}.secret";
 
             /* 修改配置文件 */
             $this->line('<comment>Client ID:</comment> '.$client->getKey());
