@@ -2,19 +2,41 @@
 
 namespace YangJiSen\QuickPassport;
 
+use Illuminate\Config\Repository as Config;
+use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Laravel\Passport\Http\Controllers\AuthorizationController;
 use Laravel\Passport\Passport;
 use Laravel\Passport\PassportServiceProvider as ServiceProvider;
+use YangJiSen\QuickPassport\Http\Controllers\PassportController;
 
 class PassportServiceProvider extends ServiceProvider
 {
     /**
-     * Register services.
+     * Register the service provider.
+     *
+     * @return void
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/passport.php', 'passport');
+        $this->mergeConfigFrom(__DIR__.'/../config/passport.php', 'passport');
 
-        parent::register();
+        Passport::setClientUuids($this->app->make(Config::class)->get('passport.client_uuids', false));
+
+        $this->app->when(AuthorizationController::class)
+            ->needs(StatefulGuard::class)
+            ->give(fn () => Auth::guard(config('passport.guard', null)));
+
+        $this->registerAuthorizationServer();
+        $this->registerClientRepository();
+        $this->registerJWTParser();
+        $this->registerResourceServer();
+        $this->registerGuard();
+
+        Passport::authorizationView('passport::authorize');
     }
 
     /**
@@ -66,6 +88,47 @@ class PassportServiceProvider extends ServiceProvider
                 Console\EnvClient::class,
                 Console\QuickInstall::class
             ]);
+        }
+    }
+
+    /**
+     * Register the Passport routes.
+     *
+     * @return void
+     */
+    protected function registerRoutes(): void
+    {
+        Route::namespace('YangJiSen\QuickPassport\Http\Controllers')
+            ->prefix(config('passport.path', 'passport'))
+            ->group(function (Router $router) {
+                $router->post('/issueToken', [PassportController::class, 'issueToken']);
+                $router->post('/programToken', [PassportController::class, 'programToken']);
+            });
+
+        parent::registerRoutes();
+    }
+
+    /**
+     * Register the package's publishable resources.
+     *
+     * @return void
+     */
+    protected function registerPublishing(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $basePath = base_path('vendor/laravel/passport');
+
+            $this->publishes([
+                $basePath.'/database/migrations' => database_path('migrations'),
+            ], 'passport-migrations');
+
+            $this->publishes([
+                $basePath.'/resources/views' => base_path('resources/views/vendor/passport'),
+            ], 'passport-views');
+
+            $this->publishes([
+                __DIR__.'/../config/passport.php' => config_path('passport.php'),
+            ], 'passport-config');
         }
     }
 
