@@ -100,9 +100,16 @@ class PassportServiceProvider extends ServiceProvider
     {
         Route::namespace('YangJiSen\QuickPassport\Http\Controllers')
             ->prefix(config('passport.path', 'passport'))
+            ->middleware(['api'])
             ->group(function (Router $router) {
                 $router->post('/issueToken', [PassportController::class, 'issueToken']);
                 $router->post('/programToken', [PassportController::class, 'programToken']);
+
+                /* 退出登录 */
+                $guard = config('passport.guard', null);
+                Route::middleware([$guard ? 'auth:'.$guard : 'auth'])
+                    ->post('/logout', [PassportController::class, 'logout']);
+
             });
 
         parent::registerRoutes();

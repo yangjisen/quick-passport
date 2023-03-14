@@ -10,6 +10,7 @@ use League\OAuth2\Server\Exception\OAuthServerException;
 use Nyholm\Psr7\Response as Psr7Response;
 use Nyholm\Psr7\ServerRequest as Psr7ServerRequest;
 use Overtrue\LaravelWeChat\EasyWeChat;
+use YangJiSen\QuickPassport\TokenRepository;
 
 class PassportController
 {
@@ -37,7 +38,8 @@ class PassportController
         return [
             'status' => 422,
             'data' => $message = $validator->messages(),
-            'message' => $message->first()
+            'message' => $message->first(),
+            'timestamp' => time()
         ];
     }
 
@@ -64,18 +66,21 @@ class PassportController
             return [
                 'status' => $response->getStatusCode(),
                 'message' => $response->getReasonPhrase(),
+                'timestamp' => time(),
                 'data' => json_decode($response->getBody(), true),
             ];
         } catch (OAuthServerException $e) {
             return [
                 'status' => $e->getHttpStatusCode(),
                 'message' => $e->getMessage(),
+                'timestamp' => time(),
                 'data' => $e->getPayload(),
             ];
         } catch (\Exception $e) {
             return [
                 'status' => 500,
                 'message' => $e->getMessage(),
+                'timestamp' => time(),
                 'data' => [],
             ];
         }
@@ -146,7 +151,7 @@ class PassportController
             $openid = Arr::get($session, 'openid');
 
             if(!$phone || !$openid)
-                return ['status' => 422, 'message' => '一键登录失败'];
+                return ['status' => 422, 'message' => '一键登录失败', 'timestamp' => time(), 'data' => []];
 
             if(config('passport.program_auto_register')) {
                 /** @uses \YangJiSen\QuickPassport\User::autoRegister 自动注册用户 */
@@ -159,9 +164,33 @@ class PassportController
             return [
                 'status' => 500,
                 'message' => $e->getMessage(),
+                'timestamp' => time(),
                 'data' => [],
             ];
         }
+    }
+
+    /**
+     * Log the user out of the application.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param TokenRepository $tokenRepository
+     * @return array|\Illuminate\Http\Response
+     */
+    public function logout(Request $request, TokenRepository $tokenRepository)
+    {
+        $user = $request->user();
+
+        $token = $user->token();
+
+        $tokenRepository->revokeAccessToken($token->id);
+
+        return [
+            'status' => 200,
+            'message' => '退出登录成功',
+            'timestamp' => time(),
+            'data' => [],
+        ];
     }
 
 }

@@ -28,5 +28,8 @@
                 "laravel/passport"
             ]
         }
+    },
+    "suggest": {
+        "overtrue/laravel-wechat": "mini program quick login."
     }
 }

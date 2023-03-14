@@ -22,3 +22,11 @@ composer require yangjisen/quick-passport
 ``` php artisan passport:quick-install ``` 快速安装配置Passport 相当于执行 ``` php artisan passport:install ``` 和 ``` php artisan passport:env-client ```
 
 ``` php artisan passport:env-client ``` 在env文件中根据数据库生成client_id和client_secret
+
+## 路由
+* 账号密码/手机验证码登录
+> POST /passport/issueToken {"username":"foo", "password":"bar"}
+* 小程序登录一键登录
+> POST /passport/programToken {"js_code":"login code", "code": "code", "iv":"iv", "encryptedData": "encryptedData"}
+* 退出登录
+> POST /passport/login 退出登录
