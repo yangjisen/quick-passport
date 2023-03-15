@@ -67,7 +67,7 @@ abstract class User extends Authenticatable
         ], [
             'phone' => $phone,
             'nickname' => $phone,
-            'program_id' => $phone,
+            'program_id' => $openid,
             'password' => bcrypt($openid)
         ]);
     }

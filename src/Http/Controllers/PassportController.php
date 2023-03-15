@@ -4,6 +4,7 @@ namespace YangJiSen\QuickPassport\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\Exception\OAuthServerException;
@@ -140,6 +141,13 @@ class PassportController
             /* 通过Code获取OpenId */
             $session = $utils->codeToSession($request->input('js_code'));
 
+            if(!$session_key = Arr::get($session, 'session_key'))
+                return ['status' => 422, 'message' => '一键登录失败', 'timestamp' => time(), 'data' => []];
+
+            $openid = Arr::get($session, 'openid');
+
+            Cache::put("program_session_key:{$openid}", $session_key);
+
             /* 解密手机号码 */
             $decrypt = $utils->decryptSession(
                 Arr::get($session, 'session_key'),
@@ -148,7 +156,6 @@ class PassportController
             );
 
             $phone = Arr::get($decrypt, 'purePhoneNumber');
-            $openid = Arr::get($session, 'openid');
 
             if(!$phone || !$openid)
                 return ['status' => 422, 'message' => '一键登录失败', 'timestamp' => time(), 'data' => []];
@@ -190,6 +197,19 @@ class PassportController
             'message' => '退出登录成功',
             'timestamp' => time(),
             'data' => [],
+        ];
+    }
+
+
+    public function personal(Request $request)
+    {
+        $user = $request->user();
+
+        return [
+            'status' => 200,
+            'message' => '查询成功',
+            'timestamp' => time(),
+            'data' => $user,
         ];
     }
 

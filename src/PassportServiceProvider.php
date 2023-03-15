@@ -107,8 +107,10 @@ class PassportServiceProvider extends ServiceProvider
 
                 /* 退出登录 */
                 $guard = config('passport.guard', null);
-                Route::middleware([$guard ? 'auth:'.$guard : 'auth'])
-                    ->post('/logout', [PassportController::class, 'logout']);
+                Route::middleware([$guard ? 'auth:'.$guard : 'auth'])->group(function () use ($router) {
+                    $router->post('/logout', [PassportController::class, 'logout']);
+                    $router->get('/personal', [PassportController::class, 'personal']);
+                });
 
             });
 
